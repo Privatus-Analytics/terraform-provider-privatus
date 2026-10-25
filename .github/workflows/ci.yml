@@ -1,0 +1,65 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  go:
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        go: ["go.mod", "1.27"]
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version: ${{ matrix.go != 'go.mod' && matrix.go || '' }}
+          go-version-file: ${{ matrix.go == 'go.mod' && 'go.mod' || '' }}
+      - name: gofmt
+        run: test -z "$(gofmt -l .)" || { gofmt -l .; exit 1; }
+      - run: go build ./...
+      - run: go vet ./...
+      - run: go test ./...
+
+  examples:
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        terraform: ["1.9.8", "1.x"]
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+      - uses: hashicorp/setup-terraform@v4
+        with:
+          terraform_version: ${{ matrix.terraform }}
+          terraform_wrapper: false
+      - name: Build the provider
+        run: go build -o "$RUNNER_TEMP/bin/terraform-provider-privatus" .
+      - name: terraform fmt
+        run: terraform fmt -check -recursive examples
+      - name: terraform validate the examples against the local provider
+        run: |
+          work="$RUNNER_TEMP/examples"
+          mkdir -p "$work"
+          for f in $(find examples -name '*.tf'); do
+            cp "$f" "$work/$(echo "$f" | tr '/' '_')"
+          done
+          cat > "$RUNNER_TEMP/terraformrc" <<RC
+          provider_installation {
+            dev_overrides {
+              "privatus-analytics/privatus" = "$RUNNER_TEMP/bin"
+            }
+            direct {}
+          }
+          RC
+          TF_CLI_CONFIG_FILE="$RUNNER_TEMP/terraformrc" terraform -chdir="$work" validate
