@@ -4,6 +4,22 @@
 > Do not install anything with this name from a public registry: it is not ours, whoever published it.
 > Build and install it from this folder until we announce the published name.
 
+**Set up your Privatus Analytics sites and goals as code.**
+
+You run many sites, and you set each one up by hand: the site, its goals, the
+traffic rules. It is slow, and it is easy to get one wrong.
+
+This provider lets Terraform (a tool that sets up services from config files)
+create and update your Privatus Analytics sites, goals and traffic rules for
+you.
+
+So every site is set up the same way, and changes are checked like any other
+code change. The numbers are honest too. Privatus Analytics counts visits
+without cookies, so there is no cookie pop-up for your analytics, and it leaves
+bots out.
+
+**Free plan, no card:** 10,000 events a month (an event is a page view or an action you track) on up to 3 sites. [Start free at privatusanalytics.com](https://privatusanalytics.com).
+
 Terraform provider for [Privatus Analytics](https://privatusanalytics.com),
 the privacy-first, cookieless web analytics. Built with the
 [terraform-plugin-framework](https://github.com/hashicorp/terraform-plugin-framework).
